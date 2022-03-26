@@ -92,38 +92,6 @@ func optimisticBound(p Pizza, currPos int) int {
 	return maxPoints
 }
 
-// Divide and conquer
-func BruteForcing(p Pizza, possiblePairs []PairType, currPos int) (int, []Slice) {
-	i, j := p.NextFreePositionFrom(currPos)
-	if i == -1 || j == -1 {
-		return 0, nil
-	}
-
-	var bestPoints int = 0
-	var bestSlices []Slice
-	for _, pair := range possiblePairs {
-		slice := Slice{
-			x:      i,
-			y:      j,
-			width:  pair[0],
-			height: pair[1],
-		}
-		isValid := p.IsValidSlice(&slice)
-		if !isValid {
-			continue
-		}
-
-		pointsEarned, slices := BruteForcing(p.GetPizzaWithUsedSlice(&slice), possiblePairs, currPos+slice.width)
-		pairPoints := pair[0] * pair[1]
-		if pairPoints+pointsEarned >= bestPoints {
-			bestPoints = pairPoints + pointsEarned
-			bestSlices = append(slices, slice)
-		}
-	}
-
-	return bestPoints, bestSlices
-}
-
 func BackTracking(p Pizza, possiblePairs []PairType, currPos int) (int, []Slice) {
 	i, j := p.NextFreePositionFrom(currPos)
 	if i == -1 || j == -1 {
@@ -157,6 +125,38 @@ func BackTracking(p Pizza, possiblePairs []PairType, currPos int) (int, []Slice)
 		}
 		if bestPoints >= p.Rows*p.Columns {
 			return bestPoints, bestSlices
+		}
+	}
+
+	return bestPoints, bestSlices
+}
+
+// Divide and conquer
+func BruteForcing(p Pizza, possiblePairs []PairType, currPos int) (int, []Slice) {
+	i, j := p.NextFreePositionFrom(currPos)
+	if i == -1 || j == -1 {
+		return 0, nil
+	}
+
+	var bestPoints int = 0
+	var bestSlices []Slice
+	for _, pair := range possiblePairs {
+		slice := Slice{
+			x:      i,
+			y:      j,
+			width:  pair[0],
+			height: pair[1],
+		}
+		isValid := p.IsValidSlice(&slice)
+		if !isValid {
+			continue
+		}
+
+		pointsEarned, slices := BruteForcing(p.GetPizzaWithUsedSlice(&slice), possiblePairs, currPos+slice.width)
+		pairPoints := pair[0] * pair[1]
+		if pairPoints+pointsEarned >= bestPoints {
+			bestPoints = pairPoints + pointsEarned
+			bestSlices = append(slices, slice)
 		}
 	}
 
