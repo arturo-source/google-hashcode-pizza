@@ -92,45 +92,6 @@ func optimisticBound(p Pizza, currPos int) int {
 	return maxPoints
 }
 
-func BackTracking(p Pizza, possiblePairs []PairType, currPos int) (int, []Slice) {
-	i, j := p.NextFreePositionFrom(currPos)
-	if i == -1 || j == -1 {
-		return 0, nil
-	}
-
-	// Pesimistic solution
-	bestPoints, bestSlices := greedyMethod(p, currPos, possiblePairs)
-	for _, pair := range possiblePairs {
-		slice := Slice{
-			x:      i,
-			y:      j,
-			width:  pair[0],
-			height: pair[1],
-		}
-		isValid := p.IsValidSlice(&slice)
-		if !isValid {
-			// Is not feasible
-			continue
-		}
-		if optimisticBound(p, currPos) <= bestPoints {
-			// Is not promising
-			continue
-		}
-
-		pointsEarned, slices := BruteForcing(p.GetPizzaWithUsedSlice(&slice), possiblePairs, currPos+slice.width)
-		pairPoints := pair[0] * pair[1]
-		if pairPoints+pointsEarned >= bestPoints {
-			bestPoints = pairPoints + pointsEarned
-			bestSlices = append(slices, slice)
-		}
-		if bestPoints >= p.Rows*p.Columns {
-			return bestPoints, bestSlices
-		}
-	}
-
-	return bestPoints, bestSlices
-}
-
 // Divide and conquer
 func BruteForcing(p Pizza, possiblePairs []PairType, currPos int) (int, []Slice) {
 	i, j := p.NextFreePositionFrom(currPos)
@@ -157,6 +118,45 @@ func BruteForcing(p Pizza, possiblePairs []PairType, currPos int) (int, []Slice)
 		if pairPoints+pointsEarned >= bestPoints {
 			bestPoints = pairPoints + pointsEarned
 			bestSlices = append(slices, slice)
+		}
+	}
+
+	return bestPoints, bestSlices
+}
+
+func BackTracking(p Pizza, possiblePairs []PairType, currPos int) (int, []Slice) {
+	i, j := p.NextFreePositionFrom(currPos)
+	if i == -1 || j == -1 {
+		return 0, nil
+	}
+
+	// Pesimistic solution
+	bestPoints, bestSlices := greedyMethod(p, currPos, possiblePairs)
+	for _, pair := range possiblePairs {
+		slice := Slice{
+			x:      i,
+			y:      j,
+			width:  pair[0],
+			height: pair[1],
+		}
+		isValid := p.IsValidSlice(&slice)
+		if !isValid {
+			// Is not feasible
+			continue
+		}
+		if optimisticBound(p, currPos) <= bestPoints {
+			// Is not promising
+			continue
+		}
+
+		pointsEarned, slices := BackTracking(p.GetPizzaWithUsedSlice(&slice), possiblePairs, currPos+slice.width)
+		pairPoints := pair[0] * pair[1]
+		if pairPoints+pointsEarned >= bestPoints {
+			bestPoints = pairPoints + pointsEarned
+			bestSlices = append(slices, slice)
+		}
+		if bestPoints >= p.Rows*p.Columns {
+			return bestPoints, bestSlices
 		}
 	}
 
