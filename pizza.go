@@ -84,9 +84,7 @@ func (p *Pizza) GetPizzaWithUsedSlice(slice *Slice) (pizzaCopy Pizza) {
 func (p *Pizza) GetCopy() (pizzaCopy Pizza) {
 	pizzaCopy = *p
 	pizzaCopy.data = make([]Cell, len(p.data))
-	for i := range p.data {
-		pizzaCopy.data[i] = p.data[i]
-	}
+	copy(pizzaCopy.data, p.data)
 
 	return
 }
