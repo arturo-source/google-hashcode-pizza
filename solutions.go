@@ -19,7 +19,7 @@ func greedyMethod(p Pizza, slices Slices, possiblePairs []PairType) (int, Slices
 		slice1x1.x = x
 		slice1x1.y = y
 
-		if !slices.IsIn(slice1x1) {
+		if !(slices.IsIn(slice1x1) || bestSlices.IsIn(slice1x1)) {
 			for _, pair := range possiblePairs {
 				slice := Slice{
 					x:      x,
@@ -28,13 +28,14 @@ func greedyMethod(p Pizza, slices Slices, possiblePairs []PairType) (int, Slices
 					height: pair[1],
 				}
 
-				if p.IsValidSlice(slice, slices) {
+				if p.IsValidSlice(slice, slices) || p.IsValidSlice(slice, bestSlices) {
+					p.SetSliceUsed(&slice)
 					pointsPerSlice := pair[0] * pair[1]
 
 					bestPoints += pointsPerSlice
 					bestSlices.slices = append(bestSlices.slices, slice)
 
-					i += slice.width
+					i += slice.width - 1
 
 					break
 				}
