@@ -77,7 +77,7 @@ func (s *Slices) Last() Slice {
 // Taken from https://stackoverflow.com/a/306379
 func SlicesOverlap(A, B Slice) bool {
 	valueInRange := func(value, min, max int) bool {
-		return (value > min) && (value < max)
+		return (value >= min) && (value < max)
 	}
 
 	xOverlap := valueInRange(A.x, B.x, B.x+B.width) ||
