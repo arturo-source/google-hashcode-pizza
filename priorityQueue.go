@@ -2,11 +2,11 @@ package main
 
 type Node struct {
 	p                *Pizza
+	currPos          int
+	currPoints       int
+	currSlices       []Slice
 	optimisticBound  int
-	pessimisticBound struct {
-		points int
-		slices []Slice
-	}
+	pessimisticBound int
 }
 
 type PriorityQueue struct {
@@ -41,6 +41,17 @@ func (pq *PriorityQueue) Pop() Node {
 	pq.queue = pq.queue[1:]
 
 	return node
+}
+
+// func (pq *PriorityQueue) Print() {
+// 	for _, n := range pq.queue {
+// 		fmt.Print(n.pessimisticBound+n.currPoints, "-")
+// 	}
+// 	fmt.Println()
+// }
+
+func (pq *PriorityQueue) Empty() bool {
+	return len(pq.queue) == 0
 }
 
 // Taken from https://rosettacode.org/wiki/Binary_search#Go
