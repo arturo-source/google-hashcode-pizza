@@ -1,9 +1,9 @@
 package main
 
 type Node struct {
-	currPoints       int
-	currSlices       Slices
-	optimisticBound  int
+	currPoints int
+	currSlices Slices
+	// optimisticBound  int
 	pessimisticBound int
 }
 

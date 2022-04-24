@@ -74,15 +74,14 @@ func BranchAndBound(p *Pizza, possiblePairs []PairType) (int, Slices) {
 	pq := PriorityQueue{
 		queue: []Node{},
 		compareFunc: func(introduced Node, inArray Node) bool {
-			// return introduced.currPoints+introduced.pessimisticBound < inArray.currPoints+inArray.pessimisticBound
-			return true
+			return introduced.currPoints+introduced.pessimisticBound < inArray.currPoints+inArray.pessimisticBound
 		},
 	}
 	pq.Push(Node{
 		currPoints: 0,
 		currSlices: Slices{},
 		// optimisticBound:  maxPoints,
-		// pessimisticBound: bestPoints,
+		pessimisticBound: bestPoints,
 	})
 
 	for !pq.Empty() {
@@ -122,21 +121,14 @@ func BranchAndBound(p *Pizza, possiblePairs []PairType) (int, Slices) {
 					return nextNodePoints, nextNodeSlices
 				}
 
-				// pesimistic, slices := greedyMethod(*p, nextNodeSlices, possiblePairs)
+				pesimistic, slices := greedyMethod(*p, nextNodeSlices, possiblePairs)
 				// optimistic := optimisticBound(*p, nextNodeSlices)
-				// if nextNodePoints+pesimistic > bestPoints {
-				// 	// Improve the solution!
-				// 	fmt.Println("Improve the solution! With greedy.")
-				// 	bestPoints = nextNodePoints + pesimistic
-				// 	bestSlices.slices = append(nextNodeSlices.slices, slices.slices...)
-				// 	fmt.Println("New best points:", bestPoints)
-				// }
-				if nextNodePoints > bestPoints {
+				if nextNodePoints+pesimistic > bestPoints {
 					// Improve the solution!
-					// fmt.Println("Improve the solution! With greedy.")
-					bestPoints = nextNodePoints
-					bestSlices = nextNodeSlices
-					// fmt.Println("New best points:", bestPoints)
+					fmt.Println("Improve the solution! With greedy.")
+					bestPoints = nextNodePoints + pesimistic
+					bestSlices.slices = append(nextNodeSlices.slices, slices.slices...)
+					fmt.Println("New best points:", bestPoints)
 				}
 
 				// if nextNodePoints+optimistic > bestPoints {
@@ -145,7 +137,7 @@ func BranchAndBound(p *Pizza, possiblePairs []PairType) (int, Slices) {
 					currPoints: nextNodePoints,
 					currSlices: nextNodeSlices,
 					// optimisticBound:  optimistic,
-					// pessimisticBound: pesimistic,
+					pessimisticBound: pesimistic,
 				})
 				// }
 
