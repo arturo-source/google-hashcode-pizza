@@ -27,14 +27,14 @@ func main() {
 	})
 	fmt.Println(pairs)
 
-	points, solution := greedyMethod(p, 0, pairs)
+	points, solution := greedyMethod(p, Slices{slices: []Slice{}}, pairs)
 	fmt.Println("greedy initial points:", points)
 
 	points, solution = BranchAndBound(&p, pairs)
 	fmt.Println("points:", points)
 	fmt.Println("Max posible points:", p.Columns*p.Rows)
 
-	err = WriteSol(solution, outputfile)
+	err = solution.WriteSol(outputfile)
 	if err != nil {
 		panic(err)
 	}

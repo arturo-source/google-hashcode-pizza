@@ -1,10 +1,8 @@
 package main
 
 type Node struct {
-	p                *Pizza
-	currPos          int
 	currPoints       int
-	currSlices       []Slice
+	currSlices       Slices
 	optimisticBound  int
 	pessimisticBound int
 }

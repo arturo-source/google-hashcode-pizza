@@ -68,37 +68,11 @@ func (p *Pizza) At(i, j int) (Cell, error) {
 	return p.data[j*p.Columns+i], nil
 }
 
-func (p *Pizza) isUsedAt(i, j int) bool {
-	// Assume that coordinates are always inside pizza
-	cell, _ := p.At(i, j)
-	return cell == UsedCell
-}
-
-func (p *Pizza) GetPizzaWithUsedSlice(slice *Slice) (pizzaCopy Pizza) {
-	pizzaCopy = p.GetCopy()
-	pizzaCopy.SetSliceUsed(slice)
-
-	return
-}
-
-func (p *Pizza) GetCopy() (pizzaCopy Pizza) {
-	pizzaCopy = *p
-	pizzaCopy.data = make([]Cell, len(p.data))
-	copy(pizzaCopy.data, p.data)
-
-	return
-}
-
-func (p *Pizza) SetSliceUsed(slice *Slice) {
-	for i := slice.x; i < slice.x+slice.width; i++ {
-		for j := slice.y; j < slice.y+slice.height; j++ {
-			p.data[j*p.Columns+i] = UsedCell
-		}
-	}
-}
-
-func (p *Pizza) IsValidSlice(slice *Slice) bool {
+func (p *Pizza) IsValidSlice(slice Slice, slices Slices) bool {
 	if slice.x+slice.width > p.Columns || slice.y+slice.height > p.Rows {
+		return false
+	}
+	if slices.IsIn(slice) {
 		return false
 	}
 
@@ -106,10 +80,6 @@ func (p *Pizza) IsValidSlice(slice *Slice) bool {
 
 	for i := slice.x; i < slice.x+slice.width; i++ {
 		for j := slice.y; j < slice.y+slice.height; j++ {
-			if p.isUsedAt(i, j) {
-				return false
-			}
-
 			cellContent, _ := p.At(i, j)
 			switch cellContent {
 			case Mushroom:
@@ -126,22 +96,20 @@ func (p *Pizza) IsValidSlice(slice *Slice) bool {
 	return mushrooms >= p.AtLeast && tomatoes >= p.AtLeast
 }
 
-func (p *Pizza) NextFreePositionFrom(currPos int) (i, j int) {
-	for index := currPos; index < len(p.data); index++ {
-		cell := p.data[index]
-		if cell != UsedCell {
-			j = index / p.Columns
-			i = index - j*p.Columns
+func (p *Pizza) NextFreePositionFrom(slices Slices) (i, j int) {
+	if len(slices.slices) == 0 {
+		return 0, 0
+	}
+
+	slice := slices.Last()
+	for index := slice.x + slice.width; index < len(p.data); index++ {
+		i = index % p.Columns
+		j = index / p.Columns
+		slice1x1 := Slice1x1(i, j)
+		if !slices.IsIn(slice1x1) {
 			return i, j
 		}
 	}
-	// for j := 0; j < p.Rows; j++ {
-	// 	for i := 0; i < p.Columns; i++ {
-	// 		if !p.isUsedAt(i, j) {
-	// 			return i, j
-	// 		}
-	// 	}
-	// }
 
 	return -1, -1
 }
@@ -155,4 +123,12 @@ func (p *Pizza) Draw() {
 		fmt.Println()
 	}
 	fmt.Println()
+}
+
+func (p *Pizza) SetSliceUsed(slice *Slice) {
+	for i := slice.x; i < slice.x+slice.width; i++ {
+		for j := slice.y; j < slice.y+slice.height; j++ {
+			p.data[j*p.Columns+i] = UsedCell
+		}
+	}
 }
