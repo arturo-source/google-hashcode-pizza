@@ -28,8 +28,7 @@ func greedyMethod(p Pizza, slices Slices, possiblePairs []PairType) (int, Slices
 					height: pair[1],
 				}
 
-				if p.IsValidSlice(slice, slices) || p.IsValidSlice(slice, bestSlices) {
-					p.SetSliceUsed(&slice)
+				if p.IsValidSlice(slice, slices) && p.IsValidSlice(slice, bestSlices) {
 					pointsPerSlice := pair[0] * pair[1]
 
 					bestPoints += pointsPerSlice
