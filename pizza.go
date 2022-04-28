@@ -68,11 +68,8 @@ func (p *Pizza) At(i, j int) (Cell, error) {
 	return p.data[j*p.Columns+i], nil
 }
 
-func (p *Pizza) IsValidSlice(slice Slice, slices Slices) bool {
+func (p *Pizza) IsValidSlice(slice Slice) bool {
 	if slice.x+slice.width > p.Columns || slice.y+slice.height > p.Rows {
-		return false
-	}
-	if slices.IsIn(slice) {
 		return false
 	}
 
@@ -81,6 +78,10 @@ func (p *Pizza) IsValidSlice(slice Slice, slices Slices) bool {
 	for i := slice.x; i < slice.x+slice.width; i++ {
 		for j := slice.y; j < slice.y+slice.height; j++ {
 			cellContent, _ := p.At(i, j)
+			if cellContent == UsedCell {
+				return false
+			}
+
 			switch cellContent {
 			case Mushroom:
 				mushrooms++
@@ -125,10 +126,18 @@ func (p *Pizza) Draw() {
 	fmt.Println()
 }
 
-func (p *Pizza) SetSliceUsed(slice *Slice) {
+func (p *Pizza) SetSliceUsed(slice Slice) {
 	for i := slice.x; i < slice.x+slice.width; i++ {
 		for j := slice.y; j < slice.y+slice.height; j++ {
 			p.data[j*p.Columns+i] = UsedCell
 		}
 	}
+}
+
+func (p *Pizza) CopyPizza() Pizza {
+	pCopy := *p
+	pCopy.data = make([]Cell, len(p.data))
+	copy(pCopy.data, p.data)
+
+	return pCopy
 }

@@ -4,22 +4,16 @@ import (
 	"fmt"
 )
 
-func greedyMethod(p Pizza, slices Slices, possiblePairs []PairType) (int, Slices) {
+func greedyMethod(p Pizza, currPos int, possiblePairs []PairType) (int, Slices) {
 	var bestPoints int = 0
 	var bestSlices Slices
-	var lastSlice Slice
-	if len(slices.slices) > 0 {
-		lastSlice = slices.Last()
-	}
 
-	slice1x1 := Slice1x1(0, 0)
+	pCopy := p.CopyPizza()
 
-	for i := (lastSlice.y+lastSlice.height)*p.Columns + lastSlice.x + lastSlice.width; i < len(p.data); i++ {
+	for i := currPos; i < len(p.data); i++ {
 		x, y := i%p.Columns, i/p.Columns
-		slice1x1.x = x
-		slice1x1.y = y
 
-		if !(slices.IsIn(slice1x1) || bestSlices.IsIn(slice1x1)) {
+		if pCopy.data[i] != UsedCell {
 			for _, pair := range possiblePairs {
 				slice := Slice{
 					x:      x,
@@ -28,7 +22,8 @@ func greedyMethod(p Pizza, slices Slices, possiblePairs []PairType) (int, Slices
 					height: pair[1],
 				}
 
-				if p.IsValidSlice(slice, slices) && p.IsValidSlice(slice, bestSlices) {
+				if pCopy.IsValidSlice(slice) {
+					pCopy.SetSliceUsed(slice)
 					pointsPerSlice := pair[0] * pair[1]
 
 					bestPoints += pointsPerSlice
@@ -45,29 +40,9 @@ func greedyMethod(p Pizza, slices Slices, possiblePairs []PairType) (int, Slices
 	return bestPoints, bestSlices
 }
 
-func optimisticBound(p Pizza, slices Slices) int {
-	maxPoints := 0
-	lastSlice := slices.Last()
-
-	slice1x1 := Slice1x1(0, 0)
-
-	for i := (lastSlice.y+lastSlice.height)*p.Columns + lastSlice.x + lastSlice.width; i < len(p.data); i++ {
-		slice1x1.x = i % p.Columns
-		slice1x1.y = i / p.Columns
-
-		if !slices.IsIn(slice1x1) {
-			maxPoints++
-		}
-	}
-
-	return maxPoints
-}
-
-func BranchAndBound(p *Pizza, possiblePairs []PairType) (int, Slices) {
+func BranchAndBound(p Pizza, possiblePairs []PairType) (int, Slices) {
 	// Pesimistic solution
-	// var bestPoints int
-	// var bestSlices Slices
-	bestPoints, bestSlices := greedyMethod(*p, Slices{slices: []Slice{}}, possiblePairs)
+	bestPoints, bestSlices := greedyMethod(p, 0, possiblePairs)
 	// Optimistic solution
 	maxPoints := p.Rows * p.Columns
 
@@ -78,16 +53,16 @@ func BranchAndBound(p *Pizza, possiblePairs []PairType) (int, Slices) {
 		},
 	}
 	pq.Push(Node{
-		currPoints: 0,
-		currSlices: Slices{},
-		// optimisticBound:  maxPoints,
+		p:                p,
+		currPos:          0,
+		currPoints:       0,
+		currSlices:       Slices{},
 		pessimisticBound: bestPoints,
 	})
 
 	for !pq.Empty() {
 		node := pq.Pop()
-		// fmt.Println("len(pq.queue)", len(pq.queue))
-		// fmt.Printf("%+v\n", node.currSlices)
+		p = node.p
 
 		i, j := p.NextFreePositionFrom(node.currSlices)
 		if i == -1 || j == -1 {
@@ -109,11 +84,15 @@ func BranchAndBound(p *Pizza, possiblePairs []PairType) (int, Slices) {
 				height: pair[1],
 			}
 
-			isValid := p.IsValidSlice(slice, node.currSlices)
+			isValid := p.IsValidSlice(slice)
 			if isValid {
 				// Is feasible
+				pizzaUsed := p.CopyPizza()
+				pizzaUsed.SetSliceUsed(slice)
+
 				nextNodePoints := node.currPoints + slice.width*slice.height
 				nextNodeSlices := Slices{slices: append(node.currSlices.slices, slice)}
+				nextNodePos := node.currPos + slice.width
 
 				if nextNodePoints == maxPoints {
 					// It's the best possible solution!
@@ -121,8 +100,7 @@ func BranchAndBound(p *Pizza, possiblePairs []PairType) (int, Slices) {
 					return nextNodePoints, nextNodeSlices
 				}
 
-				pesimistic, slices := greedyMethod(*p, nextNodeSlices, possiblePairs)
-				// optimistic := optimisticBound(*p, nextNodeSlices)
+				pesimistic, slices := greedyMethod(pizzaUsed, node.currPos, possiblePairs)
 				if nextNodePoints+pesimistic > bestPoints {
 					// Improve the solution!
 					fmt.Println("Improve the solution! With greedy.")
@@ -131,21 +109,21 @@ func BranchAndBound(p *Pizza, possiblePairs []PairType) (int, Slices) {
 					fmt.Println("New best points:", bestPoints)
 				}
 
-				// if nextNodePoints+optimistic > bestPoints {
-				// Is promising
+				// Node is always promising
+				// because I didn't find any valid optimistic heuristic
 				pq.Push(Node{
-					currPoints: nextNodePoints,
-					currSlices: nextNodeSlices,
-					// optimisticBound:  optimistic,
+					p:                pizzaUsed,
+					currPos:          nextNodePos,
+					currPoints:       nextNodePoints,
+					currSlices:       nextNodeSlices,
 					pessimisticBound: pesimistic,
 				})
-				// }
 
-				// if optimistic == pesimistic {
-				// 	// It's the best possible solution!
-				// 	fmt.Println("Finished with optimistic == pesimistic")
-				// 	return nextNodePoints + pesimistic, Slices{append(nextNodeSlices.slices, slices.slices...)}
-				// }
+				if nextNodePoints+pesimistic == maxPoints {
+					// It's the best possible solution!
+					fmt.Println("Finished with nextNodePoints+pesimistic == maxPoints")
+					return nextNodePoints + pesimistic, Slices{append(nextNodeSlices.slices, slices.slices...)}
+				}
 			}
 		}
 	}
